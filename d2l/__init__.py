@@ -15,7 +15,8 @@ from .regression import (
 from .classification import (
     FashionMNIST,
     SoftmaxClassifierScratch,
-    SoftmaxClassifierTorch
+    SoftmaxClassifierTorch,
+    MLPClassifierTorch
 )
 
 __all__ = [
@@ -34,5 +35,6 @@ __all__ = [
     # Classification
     'FashionMNIST',
     'SoftmaxClassifierScratch',
-    'SoftmaxClassifierTorch'
+    'SoftmaxClassifierTorch',
+    'MLPClassifierTorch'
 ]

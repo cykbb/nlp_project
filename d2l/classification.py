@@ -1,3 +1,4 @@
+import re
 import torch
 from torch.utils.data import DataLoader
 import torchvision
@@ -49,7 +50,7 @@ class FashionMNIST(Dataset):
             self.test, batch_size=batch_size, shuffle=False
         )
     
-class SoftmaxClassifier(Model):
+class Classifier(Model):
     def __init__(self, optimizer: Any = None) -> None:
         
  
@@ -64,7 +65,7 @@ class SoftmaxClassifier(Model):
                 total += y.shape[0]
         return correct / total
 
-class SoftmaxClassifierScratch(SoftmaxClassifier):
+class SoftmaxClassifierScratch(Classifier):
     def __init__(self, 
                  num_features: int,
                  num_outputs: int, 
@@ -96,9 +97,9 @@ class SoftmaxClassifierScratch(SoftmaxClassifier):
         return self.softmax(X @ self.W + self.b)
     
     def predict(self, X: torch.Tensor) -> torch.Tensor:
-        return super().predict(X).argmax(dim=1)
+        return self.forward(X).argmax(dim=1)
     
-class SoftmaxClassifierTorch(SoftmaxClassifier):
+class SoftmaxClassifierTorch(Classifier):
     def __init__(self, 
                  num_features: int,
                  num_outputs: int, 
@@ -123,8 +124,47 @@ class SoftmaxClassifierTorch(SoftmaxClassifier):
         return self.net(X)
     
     def predict(self, X: torch.Tensor) -> torch.Tensor:
-        return super().predict(X).softmax(dim=1).argmax(dim=1)
+        return self.forward(X).softmax(dim=1).argmax(dim=1)
 
     def loss(self, y_hat: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         return torch.nn.functional.cross_entropy(y_hat, y)
 
+class MLPClassifierTorch(Classifier):
+    def __init__(self, 
+                 num_features: int,
+                 num_outputs: int, 
+                 num_hiddens: List[int],
+                 lr: float = 0.1, 
+                 rng: torch.Generator = torch.Generator().manual_seed(42)) -> None:
+        
+        self.num_features = num_features
+        self.num_outputs = num_outputs
+        self.num_hiddens = num_hiddens
+        self.lr = lr
+        self.rng = rng
+
+        layers: List[torch.nn.Module] = [torch.nn.Flatten()]  # Add flatten layer for image input
+        input_size = num_features
+        for hidden_size in num_hiddens:
+            layers.append(torch.nn.Linear(input_size, hidden_size))
+            layers.append(torch.nn.ReLU())
+            input_size = hidden_size
+        layers.append(torch.nn.Linear(input_size, num_outputs))
+        
+        self.net = torch.nn.Sequential(*layers)
+        
+        for layer in self.net:
+            if isinstance(layer, torch.nn.Linear):
+                torch.nn.init.normal_(layer.weight, 0, 0.01, generator=self.rng)
+                torch.nn.init.zeros_(layer.bias)
+        
+        super().__init__(torch.optim.SGD(self.net.parameters(), lr=self.lr))
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        return self.net(X)
+    
+    def predict(self, X: torch.Tensor) -> torch.Tensor:
+        return self.forward(X).softmax(dim=1).argmax(dim=1)
+    
+    def loss(self, y_hat: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        return torch.nn.functional.cross_entropy(y_hat, y, reduction='mean')
