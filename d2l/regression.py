@@ -1,11 +1,8 @@
 import torch
 from torch import nn
-import numpy as np
-from typing import Tuple,  Generator, List, Any
+from typing import Tuple,  Generator, Any
 from torch.utils.data import DataLoader, TensorDataset
-from matplotlib import pyplot as plt
-from d2l.plot import plot
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from .optimizer import SGD
 from .dataset import Dataset
 from .model import Model

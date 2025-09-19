@@ -1,16 +1,11 @@
-import re
+from typing import Any, List, Tuple
 import torch
 from torch.utils.data import DataLoader
 import torchvision
 from torchvision import transforms
 from .optimizer import SGD
-from .plot import plot
 from .dataset import Dataset
 from .model import Model
-import numpy as np
-
-from typing import Generator, Tuple, List, Any, cast
-import matplotlib.pyplot as plt
 
 class FashionMNIST(Dataset):
     def __init__(self, 
@@ -52,8 +47,6 @@ class FashionMNIST(Dataset):
     
 class Classifier(Model):
     def __init__(self, optimizer: Any = None) -> None:
-        
- 
         super().__init__(optimizer)
         
     def accuracy(self, test_data_loader: DataLoader) -> float:

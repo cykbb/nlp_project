@@ -19,6 +19,13 @@ from .classification import (
     MLPClassifierTorch
 )
 
+from .utils import (
+    cpu,
+    gpu,
+    num_gpus,
+    try_gpu
+)
+
 __all__ = [
     # Plot utilities
     'plot', 
@@ -36,5 +43,11 @@ __all__ = [
     'FashionMNIST',
     'SoftmaxClassifierScratch',
     'SoftmaxClassifierTorch',
-    'MLPClassifierTorch'
+    'MLPClassifierTorch',
+    
+    # Utils
+    'cpu',
+    'gpu',
+    'num_gpus',
+    'try_gpu'
 ]

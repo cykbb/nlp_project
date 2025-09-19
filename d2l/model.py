@@ -1,9 +1,7 @@
-from numpy.random import f
 import torch
 import numpy as np
 from typing import Generator, List, Any
 from matplotlib import pyplot as plt
-from torch.nn.modules import loss
 from d2l.plot import plot
 from abc import ABC, abstractmethod
 
@@ -59,3 +57,62 @@ class Model(ABC):
     @abstractmethod
     def loss(self, y_hat: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         pass
+    
+class ModelTorch(Model):
+    def __init__(self, net: torch.nn.Module, loss_fn: Any, optimizer: Any) -> None:
+        super().__init__(optimizer)
+        self.net: torch.nn.Module = net
+        self.loss_fn: Any = loss_fn
+        
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        return self.net(X)
+    
+    def loss(self, y_hat: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        return self.loss_fn(y_hat, y)
+
+    def apply_init(self, inputs: torch.Tensor, init_fn: Any) -> None:
+        self.net(inputs)  
+        if init_fn is not None:
+            self.net.apply(init_fn)
+            
+    def to_device(self, device: torch.device) -> None:
+        """将模型和优化器状态迁移到指定设备
+        
+        Args:
+            device: 目标设备 (如 torch.device('cuda'), torch.device('cpu'))
+        """
+        # 迁移网络参数
+        self.net.to(device)
+        
+        # 迁移优化器状态 (如动量缓冲区等)
+        for param_group in self.optimizer.param_groups:
+            for param in param_group['params']:
+                param_state = self.optimizer.state.get(param)
+                if param_state is not None:
+                    for key, value in param_state.items():
+                        if isinstance(value, torch.Tensor):
+                            param_state[key] = value.to(device)
+    
+    def cuda(self) -> 'ModelTorch':
+        """迁移到CUDA设备 (如果可用)"""
+        if torch.cuda.is_available():
+            device = torch.device('cuda')
+            self.to_device(device)
+        else:
+            print("CUDA不可用，保持在CPU上")
+        return self
+    
+    def cpu(self) -> 'ModelTorch':
+        """迁移到CPU设备"""
+        device = torch.device('cpu')
+        self.to_device(device)
+        return self
+    
+    def mps(self) -> 'ModelTorch':
+        """迁移到MPS设备 (Apple Silicon)"""
+        if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            device = torch.device('mps')
+            self.to_device(device)
+        else:
+            print("MPS不可用，保持在当前设备")
+        return self
