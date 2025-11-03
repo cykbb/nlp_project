@@ -4,14 +4,14 @@ from typing import Iterable
 
 class Model(ABC):
     def __init__(self) -> None:
-        pass
+        self.is_training: bool = True
     
     def train_mode(self) -> None:
-        pass
+        self.is_training = True
 
     def eval_mode(self) -> None:
-        pass
-    
+        self.is_training = False
+
     def to_device(self, device: torch.device) -> None:
         for param in self.parameters():
             param.to(device)
@@ -38,9 +38,11 @@ class ModelTorch(Model):
         self.net: torch.nn.Module = net
         
     def train_mode(self) -> None:
+        super().train_mode()
         self.net.train()
 
     def eval_mode(self) -> None:
+        super().eval_mode()
         self.net.eval()
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:

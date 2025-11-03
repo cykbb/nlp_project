@@ -43,7 +43,9 @@ from .classification.model import (
     SoftmaxClassifier,
     SoftmaxClassifierTorch,
     MLPClassifier,
-    MLPClassifierTorch
+    MLPClassifierTorch,
+    MLPClassifierDropout,
+    MLPClassifierDropoutTorch
 )
 
 from .classification.dataset import FashionMNISTDataset

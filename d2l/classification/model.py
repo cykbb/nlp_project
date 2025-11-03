@@ -117,23 +117,83 @@ class MLPClassifierTorch(ModelTorch):
         self.num_hiddens = num_hiddens
         self.rng = rng
 
+        super().__init__(self.make_net())
+        
+    def make_net(self) -> torch.nn.Module:
         layers: List[torch.nn.Module] = [torch.nn.Flatten()]  # Add flatten layer for image input
-        input_size = num_features
-        for hidden_size in num_hiddens:
+        input_size = self.num_features
+        for hidden_size in self.num_hiddens:
             layers.append(torch.nn.Linear(input_size, hidden_size))
             layers.append(torch.nn.ReLU())
             input_size = hidden_size
-        layers.append(torch.nn.Linear(input_size, num_outputs))
+        layers.append(torch.nn.Linear(input_size, self.num_outputs))
         net = torch.nn.Sequential(*layers)
 
         for layer in net:
             if isinstance(layer, torch.nn.Linear):
                 torch.nn.init.normal_(layer.weight, 0, 0.01, generator=self.rng)
                 torch.nn.init.zeros_(layer.bias)
-        super().__init__(net)
+        return net
     
     def predict(self, X: torch.Tensor) -> torch.Tensor:
         return self.forward(X).argmax(dim=1)
     
     def loss(self, y_hat: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         return torch.nn.functional.cross_entropy(y_hat, y, reduction='mean')
+    
+class MLPClassifierDropout(MLPClassifier):
+    def __init__(self,
+                 num_features: int,
+                 num_outputs: int, 
+                 num_hiddens: List[int],
+                 dropouts: List[float],
+                 rng: torch.Generator = torch.Generator().manual_seed(42)) -> None:
+        self.dropouts = dropouts
+        super().__init__(num_features, num_outputs, num_hiddens, rng)
+        
+    def dropout(self, X: torch.Tensor, drop_prob: float) -> torch.Tensor:
+        if drop_prob <= 0.0 or drop_prob >= 1.0:
+            return X
+        mask = (torch.rand(X.shape, generator=self.rng) > drop_prob).float()
+        return X * mask / (1.0 - drop_prob)
+    
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        X = X.reshape(X.shape[0], -1)
+        for i, (W, b) in enumerate(self.params):
+            X = X @ W + b
+            if i != len(self.params) - 1:
+                X = d2l_F.relu(X)
+                if self.is_training:
+                    X = self.dropout(X, self.dropouts[i])
+        return X
+    
+class MLPClassifierDropoutTorch(MLPClassifierTorch):
+    def __init__(self, 
+                 num_features: int,
+                 num_outputs: int, 
+                 num_hiddens: List[int],
+                 dropouts: List[float],
+                 rng: torch.Generator = torch.Generator().manual_seed(42)) -> None:
+        self.dropouts = dropouts
+        super().__init__(num_features=num_features,
+                      num_outputs=num_outputs,
+                      num_hiddens=num_hiddens,
+                      rng=rng) 
+
+    def make_net(self) -> torch.nn.Module:
+        layers: List[torch.nn.Module] = [torch.nn.Flatten()]  # Add flatten layer for image input
+        input_size = self.num_features
+        for i, hidden_size in enumerate(self.num_hiddens):
+            layers.append(torch.nn.Linear(input_size, hidden_size))
+            layers.append(torch.nn.ReLU())
+            if self.dropouts[i] > 0.0:
+                layers.append(torch.nn.Dropout(p=self.dropouts[i]))
+            input_size = hidden_size
+        layers.append(torch.nn.Linear(input_size, self.num_outputs))
+        net = torch.nn.Sequential(*layers)
+
+        for layer in net:
+            if isinstance(layer, torch.nn.Linear):
+                torch.nn.init.normal_(layer.weight, 0, 0.01, generator=self.rng)
+                torch.nn.init.zeros_(layer.bias)
+        return net
