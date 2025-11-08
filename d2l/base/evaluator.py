@@ -7,7 +7,7 @@ from d2l.base.model import Model
 EvaluatorType = TypeVar('EvaluatorType', bound='Evaluator')
 
 class Evaluator:
-    def __init__(self, model: Model) -> None:
+    def __init__(self, model: Any) -> None:
         self.model = model
 
     def loss(self, test_data_loader: Any) -> float:

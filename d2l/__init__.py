@@ -52,11 +52,17 @@ from .classification.model import (
     VGGClassifier,
     NiNClassifier,
     GoogLeNetClassifier, 
+    LeNetBNClassifierTorch,
+    LeNetBNClassifier
+)
+
+from .classification.block import (
+    ResidualBlock,
+    DenseBlock,
+    TransitionBlock,
     BatchNorm1d, 
     BatchNorm2d,
     LayerNorm,
-    LeNetBNClassifierTorch,
-    LeNetBNClassifier
 )
 
 from .classification.dataset import FashionMNISTDataset

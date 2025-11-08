@@ -2,24 +2,27 @@ from typing import Any, Callable, Generator, List, Optional, TypeVar
 
 from d2l.base.model import Model
 from tqdm.auto import tqdm # type: ignore
+import torch
 
 TrainerType = TypeVar('TrainerType', bound='Trainer')
 
 class Trainer:
     def __init__(
         self,
-        model: Model,
+        model: Any,
         optimizer: Any,
-        on_train_epoch_end: Optional[Callable[[Any, int, List[float]], Any]] = None
+        on_train_epoch_end: Optional[Callable[[Any, int, List[float]], Any]] = None, 
+        is_train_progress_leave: bool = True
     ) -> None:
         self.model = model
         self.optimizer = optimizer
         self.on_train_epoch_end = on_train_epoch_end or (lambda model, epoch_id, batch_losses: None)
+        self.is_train_progress_leave = is_train_progress_leave
 
     def _train_single_epoch(self, train_data_loader: Any) -> Any:
         self.model.train_mode()
         batch_losses: List[float] = []
-        for X, y in tqdm(train_data_loader, desc="Batch", leave=True):
+        for X, y in tqdm(train_data_loader, desc="Batch", leave=self.is_train_progress_leave):
             y_hat = self.model.forward(X)
             loss = self.model.loss(y_hat, y)
             loss.backward()
@@ -30,7 +33,7 @@ class Trainer:
 
     def train(self, train_data_loaders: Generator[Any, None, None]) -> Any:
         epoch_losses: List[List[float]] = []
-        for epoch_id, train_data_loader in tqdm(list(enumerate(train_data_loaders)), desc="Epochs", leave=True):
+        for epoch_id, train_data_loader in tqdm(list(enumerate(train_data_loaders)), desc="Epochs", leave=self.is_train_progress_leave):
             batch_losses = self._train_single_epoch(train_data_loader)
             epoch_losses.append(batch_losses)
             self.on_train_epoch_end(self.model, epoch_id, batch_losses)
