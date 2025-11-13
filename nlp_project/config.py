@@ -55,17 +55,17 @@ def _default_model_hyperparams() -> ModelConfig:
 MODEL_VARIANTS: Dict[str, ModelVariantConfig] = {
     "lstm": {
         "architecture": "lstm",
-        "checkpoint": "text_lstm_agnews.pt",
+        "checkpoint": "./exp1/text_lstm_agnews.pt",
         "hyperparams": _default_model_hyperparams(),
     },
     "gru": {
         "architecture": "gru",
-        "checkpoint": "text_gru_agnews.pt",
+        "checkpoint": "./exp1/text_gru_agnews.pt",
         "hyperparams": _default_model_hyperparams(),
     },
     "rnn": {
         "architecture": "rnn",
-        "checkpoint": "text_rnn_agnews.pt",
+        "checkpoint": "./exp1/text_rnn_agnews.pt",
         "hyperparams": _default_model_hyperparams(),
         "nonlinearity": "tanh",
     },

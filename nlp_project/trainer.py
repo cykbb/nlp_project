@@ -6,9 +6,9 @@ import torch
 from torch.optim import Optimizer
 from torch import Tensor
 
-from d2l.base import trainer as base_trainer
-from d2l.base.model import Model
-from d2l.base.trainer import BatchProcessor, EpochCallback
+from d2l import trainer as base_trainer
+from d2l.model import Model
+from d2l.trainer import BatchProcessor, EpochCallback
 
 BatchMapping = Mapping[str, Tensor]
 

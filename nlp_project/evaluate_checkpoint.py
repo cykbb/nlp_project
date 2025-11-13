@@ -11,7 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from d2l.base.model import Model
+from d2l.model import Model
 from config import DATASET_CONFIG, MODEL_VARIANTS, TRAINING_CONFIG
 from dataset import AGNewsDataset
 from evaluator import (
@@ -44,7 +44,6 @@ def build_model(dataset: AGNewsDataset, variant_name: str) -> Model:
         kwargs["nonlinearity"] = variant_cfg.get("nonlinearity", "tanh")
     model = model_cls(**kwargs)  # type: ignore[arg-type]
     return model
-
 
 def load_model_weights(
     model: Model,
@@ -99,7 +98,7 @@ def main() -> None:
     results: List[Dict[str, float | str]] = []
     for model_name in selected_models:
         variant_cfg = MODEL_VARIANTS[model_name]
-        checkpoint_path = Path(__file__).with_name(variant_cfg["checkpoint"])
+        checkpoint_path = Path(variant_cfg["checkpoint"])
         if not checkpoint_path.exists():
             raise FileNotFoundError(
                 f"Checkpoint for {model_name} not found: {checkpoint_path}"

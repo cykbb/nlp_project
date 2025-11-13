@@ -5,18 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "gensim>=4.3.3",
     "datasets>=3.2.0",
     "jupyter>=1.1.1",
     "matplotlib>=3.10.6",
     "numpy>=2.3.3",
     "pandas>=2.3.2",
     "ruff>=0.14.4",
-    "scikit-learn>=1.7.2",
     "torch>=2.8.0",
     "torchvision>=0.23.0",
     "tqdm>=4.67.1",
-    "ucimlrepo>=0.0.7",
-    "spacy>=3.7.4",
     "transformers>=4.57.1",
 ]

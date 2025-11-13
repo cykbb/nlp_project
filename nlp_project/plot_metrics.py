@@ -14,7 +14,6 @@ if str(REPO_ROOT) not in sys.path:
 
 from config import METRICS_FILENAME
 
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Plot training curves (train loss, val loss, val accuracy) from metrics JSON."

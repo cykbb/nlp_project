@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset as TorchDataset
 from transformers import AutoTokenizer
-from d2l.base.dataset import Dataset
+from d2l.dataset import Dataset
 from datasets import load_dataset
 
 class AGNewsWrapper(TorchDataset):

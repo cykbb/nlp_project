@@ -12,7 +12,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from d2l.base.model import Model
+from d2l.model import Model
 from config import DATASET_CONFIG, METRICS_FILENAME, MODEL_VARIANTS, TRAINING_CONFIG
 from dataset import AGNewsDataset
 from evaluator import (
@@ -39,13 +39,11 @@ class ExperimentResult(TypedDict):
     accuracy: float
     checkpoint: str
 
-
 class EpochMetric(TypedDict):
     epoch: int
     train_loss: float
     val_loss: float
     val_accuracy: float
-
 
 def iter_train_dataloaders(
     dataset: AGNewsDataset, *, batch_size: int, num_epochs: int

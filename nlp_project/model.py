@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from d2l.base.model import ClassifierModel
+from d2l.model import ClassifierModel
 
 def _make_rnn_kwargs(
     embedding_dim: int,

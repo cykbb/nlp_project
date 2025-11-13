@@ -4,8 +4,8 @@ from typing import Mapping
 
 import torch
 
-from d2l.base.evaluator import evaluation_metric
-from d2l.base.model import Model
+from d2l.evaluator import evaluation_metric
+from d2l.model import Model
 
 BatchMapping = Mapping[str, torch.Tensor]
 
