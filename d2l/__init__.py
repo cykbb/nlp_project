@@ -1,12 +1,12 @@
 from .base.trainer import (
-    TrainerType,
-    Trainer
+    BatchProcessor,
+    train,
 )
 
 from .base.evaluator import (
-    EvaluatorType,
-    Evaluator, 
-    ClassificationEvaluator
+    evaluate_loss,
+    evaluate_accuracy,
+    evaluation_metric,
 )
 
 from .base.plot import (

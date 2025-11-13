@@ -1,9 +1,11 @@
 from typing import List, Tuple, Optional
-from torch.utils.data import DataLoader
-import torchvision # type: ignore
-from torchvision import transforms
-from d2l.base.dataset import Dataset
+
 import torch
+import torchvision  # type: ignore
+from torch.utils.data import DataLoader
+from torchvision import transforms
+
+from d2l.base.dataset import Dataset
 
 class FashionMNISTDataset(Dataset):
     def __init__(self, 

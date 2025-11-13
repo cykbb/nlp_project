@@ -1,12 +1,12 @@
 from typing import List, Tuple
 import torch
 import torch.nn as nn
-from d2l.base.model import Model, ModelTorch
+from d2l.base.model import ClassifierModel
 import d2l.base.function as d2l_F
 from abc import abstractmethod
 from .block import VGGBlock, NiNBlock, InceptionBlock, ResidualBlock, ResidualXBlock, DenseBlock, TransitionBlock, BatchNorm1d, BatchNorm2d
 
-class SoftmaxClassifier(Model):
+class SoftmaxClassifier(ClassifierModel):
     def __init__(self, 
                  num_features: int,
                  num_outputs: int, 
@@ -16,8 +16,8 @@ class SoftmaxClassifier(Model):
         self.num_outputs = num_outputs
         self.rng = rng
 
-        self.W = torch.normal(0, 0.01, (num_features, num_outputs), generator=rng).requires_grad_(True)
-        self.b = torch.zeros(num_outputs, requires_grad=True)
+        self.W = nn.Parameter(torch.normal(0, 0.01, (num_features, num_outputs), generator=rng))
+        self.b = nn.Parameter(torch.zeros(num_outputs))
     
     def loss(self, y_hat: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         probs = d2l_F.softmax(y_hat) 
@@ -31,9 +31,6 @@ class SoftmaxClassifier(Model):
     def predict(self, X: torch.Tensor) -> torch.Tensor:
         return self.forward(X).argmax(dim=1)
 
-    def parameters(self) -> List[torch.Tensor]:
-        return [self.W, self.b]
-    
 class SoftmaxClassifierLogSumExp(SoftmaxClassifier):
     def __init__(self, 
                  num_features: int,
@@ -47,11 +44,12 @@ class SoftmaxClassifierLogSumExp(SoftmaxClassifier):
         correct_prob = y_hat[range(len(y_hat)), y]
         return (log_sum_exp - correct_prob).mean()
 
-class SoftmaxClassifierTorch(ModelTorch):
+class SoftmaxClassifierTorch(ClassifierModel):
     def __init__(self, 
                  num_features: int,
                  num_outputs: int, 
                  rng: torch.Generator = torch.Generator().manual_seed(42)) -> None:
+        super().__init__()
         self.num_features = num_features
         self.num_outputs = num_outputs
         self.rng = rng
@@ -60,8 +58,10 @@ class SoftmaxClassifierTorch(ModelTorch):
         linear = torch.nn.Linear(num_features, num_outputs)
         torch.nn.init.normal_(linear.weight, 0, 0.01, generator=self.rng)  
         torch.nn.init.zeros_(linear.bias)
-        net = torch.nn.Sequential(flatten, linear)
-        super().__init__(net)
+        self.net = torch.nn.Sequential(flatten, linear)
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        return self.net(X)
 
     def predict(self, X: torch.Tensor) -> torch.Tensor:
         return self.forward(X).argmax(dim=1)
@@ -69,7 +69,7 @@ class SoftmaxClassifierTorch(ModelTorch):
     def loss(self, y_hat: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         return torch.nn.functional.cross_entropy(y_hat, y)
 
-class MLPClassifier(Model):
+class MLPClassifier(ClassifierModel):
     def __init__(self,
                  num_features: int,
                  num_outputs: int, 
@@ -81,19 +81,21 @@ class MLPClassifier(Model):
         self.num_hiddens = num_hiddens
         self.rng = rng
 
-        self.params: List[Tuple[torch.Tensor, torch.Tensor]] = []
+        self.weights = nn.ParameterList()
+        self.biases = nn.ParameterList()
         layer_sizes = [num_features] + num_hiddens + [num_outputs]
         for i in range(len(layer_sizes) - 1):
             d, h = layer_sizes[i], layer_sizes[i + 1]
-            W = torch.normal(0, 0.01, (d, h), generator=rng).requires_grad_(True)
-            b = torch.zeros(h, requires_grad=True)
-            self.params.append((W, b))
+            W = nn.Parameter(torch.normal(0, 0.01, (d, h), generator=rng))
+            b = nn.Parameter(torch.zeros(h))
+            self.weights.append(W)
+            self.biases.append(b)
             
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         X = X.reshape(X.shape[0], -1)
-        for i, (W, b) in enumerate(self.params):
+        for i, (W, b) in enumerate(zip(self.weights, self.biases)):
             X = X @ W + b
-            if i != len(self.params) - 1:
+            if i != len(self.weights) - 1:
                 X = d2l_F.relu(X)
         return X
     
@@ -102,25 +104,22 @@ class MLPClassifier(Model):
         correct_probs = probs[range(len(y_hat)), y] 
         return -torch.log(correct_probs).mean()
     
-    def parameters(self) -> List[torch.Tensor]:
-        return [param for W_b in self.params for param in W_b]
-    
     def predict(self, X: torch.Tensor) -> torch.Tensor:
         return self.forward(X).argmax(dim=1)
         
-class MLPClassifierTorch(ModelTorch):
+class MLPClassifierTorch(ClassifierModel):
     def __init__(self, 
                  num_features: int,
                  num_outputs: int, 
                  num_hiddens: List[int],
                  rng: torch.Generator = torch.Generator().manual_seed(42)) -> None:
-
+        super().__init__()
         self.num_features = num_features
         self.num_outputs = num_outputs
         self.num_hiddens = num_hiddens
         self.rng = rng
 
-        super().__init__(self.make_net())
+        self.net = self.make_net()
         
     def make_net(self) -> torch.nn.Module:
         layers: List[torch.nn.Module] = [torch.nn.Flatten()]  # Add flatten layer for image input
@@ -138,6 +137,9 @@ class MLPClassifierTorch(ModelTorch):
                 torch.nn.init.zeros_(layer.bias)
         return net
     
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        return self.net(X)
+
     def predict(self, X: torch.Tensor) -> torch.Tensor:
         return self.forward(X).argmax(dim=1)
     
@@ -162,11 +164,11 @@ class MLPClassifierDropout(MLPClassifier):
     
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         X = X.reshape(X.shape[0], -1)
-        for i, (W, b) in enumerate(self.params):
+        for i, (W, b) in enumerate(zip(self.weights, self.biases)):
             X = X @ W + b
-            if i != len(self.params) - 1:
+            if i != len(self.weights) - 1:
                 X = d2l_F.relu(X)
-                if self.is_training:
+                if self.training:
                     X = self.dropout(X, self.dropouts[i])
         return X
     
@@ -201,19 +203,23 @@ class MLPClassifierDropoutTorch(MLPClassifierTorch):
                 torch.nn.init.zeros_(layer.bias)
         return net
     
-class ConvolutionalClassifierTorch(ModelTorch):
+class ConvolutionalClassifierTorch(ClassifierModel):
     def __init__(self,
                  num_outputs: int,
                  rng: torch.Generator = torch.Generator().manual_seed(42)) -> None:
+        super().__init__()
         self.num_outputs = num_outputs
         self.rng = rng
 
-        super().__init__(self.make_net())
+        self.net = self.make_net()
         
     @abstractmethod
     def make_net(self) -> torch.nn.Module:
         pass
     
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        return self.net(X)
+
     def init(self, X_shape: Tuple[int, ...]) -> None:
         X = torch.randn(*X_shape, generator=self.rng)
         self.forward(X)

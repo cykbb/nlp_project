@@ -1,40 +1,59 @@
-from typing import Any, Callable, Generator, List, Optional, TypeVar
+from typing import Any, Callable, Iterable, List, Optional
+
+from torch.optim import Optimizer
+from tqdm.auto import tqdm  # type: ignore
 
 from d2l.base.model import Model
-from tqdm.auto import tqdm # type: ignore
-import torch
 
-TrainerType = TypeVar('TrainerType', bound='Trainer')
+Batch = Any
+BatchProcessor = Callable[[Model, Optimizer, Batch], float]
+EpochCallback = Callable[[Model, int, List[float]], Any]
 
-class Trainer:
-    def __init__(
-        self,
-        model: Any,
-        optimizer: Any,
-        on_train_epoch_end: Optional[Callable[[Any, int, List[float]], Any]] = None, 
-        is_train_progress_leave: bool = True
-    ) -> None:
-        self.model = model
-        self.optimizer = optimizer
-        self.on_train_epoch_end = on_train_epoch_end or (lambda model, epoch_id, batch_losses: None)
-        self.is_train_progress_leave = is_train_progress_leave
+def _default_batch_processor(model: Model, optimizer: Optimizer, batch: Batch) -> float:
+    X, y = batch
+    optimizer.zero_grad()
+    y_hat = model(X)
+    loss = model.loss(y_hat, y)
+    loss.backward()
+    optimizer.step()
+    return float(loss.item())
 
-    def _train_single_epoch(self, train_data_loader: Any) -> Any:
-        self.model.train_mode()
+
+def _maybe_progress(iterable: Iterable[Any], show_progress: bool, **kwargs: Any) -> Iterable[Any]:
+    if show_progress:
+        return tqdm(iterable, **kwargs)
+    return iterable
+
+def train(
+    model: Model,
+    optimizer: Optimizer,
+    train_data_loaders: Iterable[Any],
+    *,
+    on_epoch_end: Optional[Callable[[Model, int, List[float]], Any]] = None,
+    show_progress: bool = True,
+    batch_processor: Optional[BatchProcessor] = None,
+) -> List[List[float]]:
+    processor = batch_processor or _default_batch_processor
+    epoch_losses: List[List[float]] = []
+    epoch_iter = _maybe_progress(
+        enumerate(train_data_loaders),
+        show_progress,
+        desc="Epochs",
+        leave=True,
+    )
+    for epoch_id, train_data_loader in epoch_iter:
+        model.train()
         batch_losses: List[float] = []
-        for X, y in tqdm(train_data_loader, desc="Batch", leave=self.is_train_progress_leave):
-            y_hat = self.model.forward(X)
-            loss = self.model.loss(y_hat, y)
-            loss.backward()
-            batch_losses.append(loss.item())
-            self.optimizer.step()
-            self.optimizer.zero_grad()
-        return batch_losses
-
-    def train(self, train_data_loaders: Generator[Any, None, None]) -> Any:
-        epoch_losses: List[List[float]] = []
-        for epoch_id, train_data_loader in tqdm(list(enumerate(train_data_loaders)), desc="Epochs", leave=self.is_train_progress_leave):
-            batch_losses = self._train_single_epoch(train_data_loader)
-            epoch_losses.append(batch_losses)
-            self.on_train_epoch_end(self.model, epoch_id, batch_losses)
-        return epoch_losses
+        batch_iter = _maybe_progress(
+            train_data_loader,
+            show_progress,
+            desc=f"Epoch {epoch_id}",
+            leave=False,
+        )
+        for batch in batch_iter:
+            batch_loss = processor(model, optimizer, batch)
+            batch_losses.append(batch_loss)
+        epoch_losses.append(batch_losses)
+        if on_epoch_end:
+            on_epoch_end(model, epoch_id, batch_losses)
+    return epoch_losses

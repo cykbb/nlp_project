@@ -1,0 +1,32 @@
+
+=== Training LSTM model ===
+Epochs: 0it [00:00, ?it/s]                                                                                                                   [LSTM][Epoch 1] train_loss=0.5020 val_loss=0.2938 val_acc=0.8991                                                                               
+Epochs: 1it [15:47, 947.17s/it]                                                                                                              [LSTM][Epoch 2] train_loss=0.2642 val_loss=0.2832 val_acc=0.9037                                                                               
+Epochs: 2it [31:00, 927.09s/it]                                                                                                              [LSTM][Epoch 3] train_loss=0.2027 val_loss=0.2336 val_acc=0.9230                                                                               
+Epochs: 3it [45:56, 913.19s/it]                                                                                                              [LSTM][Epoch 4] train_loss=0.1634 val_loss=0.2348 val_acc=0.9207                                                                               
+Epochs: 4it [1:00:42, 902.17s/it]                                                                                                            [LSTM][Epoch 5] train_loss=0.1309 val_loss=0.2379 val_acc=0.9247                                                                               
+Epochs: 5it [1:15:55, 911.03s/it]
+[LSTM] Final evaluation -> loss: 0.2379, accuracy: 0.9247
+
+=== Training GRU model ===
+Epochs: 0it [00:00, ?it/s]                                                                                                                   [GRU][Epoch 1] train_loss=0.4733 val_loss=0.2851 val_acc=0.8976                                                                                
+Epochs: 1it [12:29, 749.43s/it]                                                                                                              [GRU][Epoch 2] train_loss=0.2441 val_loss=0.2372 val_acc=0.9197                                                                                
+Epochs: 2it [25:15, 759.18s/it]                                                                                                              [GRU][Epoch 3] train_loss=0.1858 val_loss=0.2323 val_acc=0.9228                                                                                
+Epochs: 3it [38:04, 763.61s/it]                                                                                                              [GRU][Epoch 4] train_loss=0.1494 val_loss=0.2323 val_acc=0.9237                                                                                
+Epochs: 4it [50:50, 764.65s/it]                                                                                                              [GRU][Epoch 5] train_loss=0.1225 val_loss=0.2421 val_acc=0.9243                                                                                
+Epochs: 5it [1:03:26, 761.36s/it]
+[GRU] Final evaluation -> loss: 0.2421, accuracy: 0.9243
+
+=== Training RNN model ===
+Epochs: 0it [00:00, ?it/s]                                                                                                                   [RNN][Epoch 1] train_loss=0.8534 val_loss=0.7698 val_acc=0.6736                                                                                
+Epochs: 1it [06:15, 375.90s/it]                                                                                                              [RNN][Epoch 2] train_loss=0.5901 val_loss=0.4386 val_acc=0.8464                                                                                
+Epochs: 2it [12:28, 373.77s/it]                                                                                                              [RNN][Epoch 3] train_loss=0.4838 val_loss=0.4142 val_acc=0.8538                                                                                
+Epochs: 3it [18:38, 372.24s/it]                                                                                                              [RNN][Epoch 4] train_loss=0.4120 val_loss=0.4812 val_acc=0.8522                                                                                
+Epochs: 4it [24:51, 372.48s/it]                                                                                                              [RNN][Epoch 5] train_loss=0.3699 val_loss=0.3712 val_acc=0.8864                                                                                
+Epochs: 5it [31:05, 373.08s/it]
+[RNN] Final evaluation -> loss: 0.3712, accuracy: 0.8864
+
+=== Model Comparison Summary ===
+ LSTM | loss: 0.2379 | acc: 0.9247 | ckpt: /Users/jinceyang/Desktop/codebase/ml/learn_d2l/nlp_project/text_lstm_agnews.pt
+  GRU | loss: 0.2421 | acc: 0.9243 | ckpt: /Users/jinceyang/Desktop/codebase/ml/learn_d2l/nlp_project/text_gru_agnews.pt
+  RNN | loss: 0.3712 | acc: 0.8864 | ckpt: /Users/jinceyang/Desktop/codebase/ml/learn_d2l/nlp_project/text_rnn_agnews.pt
