@@ -1,0 +1,20 @@
+Evaluation Metrics for RNN
+============================================================
+
+Accuracy:             0.8997 (89.97%)
+Precision (weighted): 0.8998
+Recall (weighted):    0.8997
+F1-score (weighted):  0.8998
+
+Per-Class Metrics:
+------------------------------------------------------------
+World        - Precision: 0.9104, Recall: 0.9037, F1: 0.9070
+Sports       - Precision: 0.9605, Recall: 0.9611, F1: 0.9608
+Business     - Precision: 0.8659, Recall: 0.8595, F1: 0.8627
+Sci/Tech     - Precision: 0.8625, Recall: 0.8747, F1: 0.8686
+
+Confusion Matrix:
+[[1717   47   82   54]
+ [  29 1826   24   21]
+ [  64   13 1633  190]
+ [  76   15  147 1662]]

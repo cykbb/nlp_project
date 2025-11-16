@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import sys
+import time
 from typing import Dict, Generator, List, Tuple, TypedDict, Type
 
 import torch
@@ -44,6 +45,7 @@ class EpochMetric(TypedDict):
     train_loss: float
     val_loss: float
     val_accuracy: float
+    epoch_time: float  # Time in seconds for this epoch
 
 def iter_train_dataloaders(
     dataset: AGNewsDataset, *, batch_size: int, num_epochs: int
@@ -60,8 +62,12 @@ def make_epoch_end_logger(
     model_name: str,
     test_loader: torch.utils.data.DataLoader,
     history: List[EpochMetric],
+    best_state: Dict,
+    checkpoint_path: Path,
+    epoch_start_time: Dict,
 ):
     def _callback(model: Model, epoch_id: int, batch_losses: List[float]):
+        epoch_time = time.time() - epoch_start_time['start']
         avg_loss = sum(batch_losses) / max(len(batch_losses), 1)
         val_loss = evaluate_text_classification_loss(model, test_loader)
         val_acc = evaluate_text_classification_accuracy(model, test_loader)
@@ -71,14 +77,30 @@ def make_epoch_end_logger(
                 train_loss=avg_loss,
                 val_loss=val_loss,
                 val_accuracy=val_acc,
+                epoch_time=epoch_time,
             )
         )
         print(
             f"[{model_name.upper()}][Epoch {epoch_id + 1}] "
             f"train_loss={avg_loss:.4f} "
             f"val_loss={val_loss:.4f} "
-            f"val_acc={val_acc:.4f}"
+            f"val_acc={val_acc:.4f} "
+            f"time={epoch_time:.1f}s"
         )
+        
+        # Save best model based on validation accuracy
+        if val_acc > best_state['best_val_acc']:
+            best_state['best_val_acc'] = val_acc
+            best_state['best_epoch'] = epoch_id + 1
+            best_state['best_val_loss'] = val_loss
+            model.save(str(checkpoint_path))
+            print(
+                f"  ✓ New best model saved! "
+                f"Val Acc: {val_acc:.4f} (Epoch {epoch_id + 1})"
+            )
+        
+        # Reset timer for next epoch
+        epoch_start_time['start'] = time.time()
 
     return _callback
 
@@ -108,7 +130,7 @@ def train_and_evaluate_variant(
     print(f"\n=== Training {variant_name.upper()} model ===")
     model = build_model_for_variant(variant_name, dataset)
     checkpoint_name = MODEL_VARIANTS[variant_name]["checkpoint"]
-    checkpoint_path = Path(__file__).with_name(checkpoint_name)
+    checkpoint_path = Path(__file__).parent / checkpoint_name
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
 
     batch_size = TRAINING_CONFIG["batch_size"]
@@ -118,22 +140,47 @@ def train_and_evaluate_variant(
     )
     optimizer = Adam(model.parameters(), lr=TRAINING_CONFIG["learning_rate"])
     history: List[EpochMetric] = []
+    
+    # Track best model state
+    best_state = {
+        'best_val_acc': 0.0,
+        'best_epoch': 0,
+        'best_val_loss': float('inf')
+    }
+    
+    # Track training time
+    epoch_start_time = {'start': time.time()}
+    total_start_time = time.time()
 
     train_text_classifier(
         model,
         optimizer,
         train_loader_epochs,
         device=device,
-        on_epoch_end=make_epoch_end_logger(variant_name, test_loader, history),
+        on_epoch_end=make_epoch_end_logger(
+            variant_name, test_loader, history, best_state, checkpoint_path, epoch_start_time
+        ),
         show_progress=True,
     )
+    
+    total_training_time = time.time() - total_start_time
 
+    # Load best model for final evaluation
+    print(f"\n[{variant_name.upper()}] Loading best model from epoch {best_state['best_epoch']}...")
+    model.load(str(checkpoint_path))
+    
     final_loss = evaluate_text_classification_loss(model, test_loader)
     final_acc = evaluate_text_classification_accuracy(model, test_loader)
-    model.save(str(checkpoint_path))
+    
+    # Calculate average epoch time
+    avg_epoch_time = total_training_time / num_epochs
+    
     print(
-        f"[{variant_name.upper()}] Final evaluation -> "
-        f"loss: {final_loss:.4f}, accuracy: {final_acc:.4f}"
+        f"[{variant_name.upper()}] Best model evaluation -> "
+        f"loss: {final_loss:.4f}, accuracy: {final_acc:.4f} "
+        f"(from epoch {best_state['best_epoch']})\n"
+        f"Total training time: {total_training_time:.1f}s ({total_training_time/60:.1f}m)\n"
+        f"Average time per epoch: {avg_epoch_time:.1f}s"
     )
 
     return (
@@ -176,7 +223,10 @@ def main() -> None:
             f"ckpt: {result['checkpoint']}"
         )
 
-    metrics_path = Path(__file__).with_name(METRICS_FILENAME)
+    # Save metrics to exp3 directory
+    exp_dir = Path(__file__).parent / "exp3"
+    exp_dir.mkdir(parents=True, exist_ok=True)
+    metrics_path = exp_dir / METRICS_FILENAME
     with metrics_path.open("w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=2)
     print(f"\nSaved per-epoch metrics to {metrics_path}")

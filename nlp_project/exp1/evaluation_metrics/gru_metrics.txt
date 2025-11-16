@@ -1,0 +1,20 @@
+Evaluation Metrics for GRU
+============================================================
+
+Accuracy:             0.9195 (91.95%)
+Precision (weighted): 0.9196
+Recall (weighted):    0.9195
+F1-score (weighted):  0.9195
+
+Per-Class Metrics:
+------------------------------------------------------------
+World        - Precision: 0.9212, Recall: 0.9353, F1: 0.9282
+Sports       - Precision: 0.9757, Recall: 0.9721, F1: 0.9739
+Business     - Precision: 0.8756, Recall: 0.8895, F1: 0.8825
+Sci/Tech     - Precision: 0.9058, Recall: 0.8811, F1: 0.8933
+
+Confusion Matrix:
+[[1777   20   65   38]
+ [  31 1847   16    6]
+ [  68   12 1690  130]
+ [  53   14  159 1674]]

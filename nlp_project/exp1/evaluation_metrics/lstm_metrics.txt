@@ -1,0 +1,20 @@
+Evaluation Metrics for LSTM
+============================================================
+
+Accuracy:             0.9267 (92.67%)
+Precision (weighted): 0.9266
+Recall (weighted):    0.9267
+F1-score (weighted):  0.9266
+
+Per-Class Metrics:
+------------------------------------------------------------
+World        - Precision: 0.9269, Recall: 0.9342, F1: 0.9305
+Sports       - Precision: 0.9727, Recall: 0.9768, F1: 0.9748
+Business     - Precision: 0.9020, Recall: 0.8868, F1: 0.8944
+Sci/Tech     - Precision: 0.9047, Recall: 0.9089, F1: 0.9068
+
+Confusion Matrix:
+[[1775   25   57   43]
+ [  20 1856   18    6]
+ [  69   13 1685  133]
+ [  51   14  108 1727]]

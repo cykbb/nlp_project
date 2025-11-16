@@ -38,7 +38,7 @@ DATASET_CONFIG: DatasetConfig = {
 
 TRAINING_CONFIG: TrainingConfig = {
     "batch_size": 64,
-    "num_epochs": 5,
+    "num_epochs": 15,
     "learning_rate": 1e-3,
     "seed": 42,
 }
@@ -55,17 +55,17 @@ def _default_model_hyperparams() -> ModelConfig:
 MODEL_VARIANTS: Dict[str, ModelVariantConfig] = {
     "lstm": {
         "architecture": "lstm",
-        "checkpoint": "./exp1/text_lstm_agnews.pt",
+        "checkpoint": "./exp3/text_lstm_agnews_best.pt",
         "hyperparams": _default_model_hyperparams(),
     },
     "gru": {
         "architecture": "gru",
-        "checkpoint": "./exp1/text_gru_agnews.pt",
+        "checkpoint": "./exp3/text_gru_agnews_best.pt",
         "hyperparams": _default_model_hyperparams(),
     },
     "rnn": {
         "architecture": "rnn",
-        "checkpoint": "./exp1/text_rnn_agnews.pt",
+        "checkpoint": "./exp3/text_rnn_agnews_best.pt",
         "hyperparams": _default_model_hyperparams(),
         "nonlinearity": "tanh",
     },
